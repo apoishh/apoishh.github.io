@@ -368,6 +368,16 @@ const PHOTOS = {
       "src": "photos/travel/Turkey/web/DSC04898.jpg",
       "w": 2000,
       "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05087.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05101.jpg",
+      "w": 2000,
+      "h": 1333
     }
   ]
 };
