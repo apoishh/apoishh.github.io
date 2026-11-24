@@ -46,68 +46,108 @@
     });
   }, { rootMargin: "400px 0px" });
 
+  /* ---------- Masonry grid ---------- */
+  // Each photo goes into whichever column is currently shortest, so every
+  // photo keeps its own ratio and there are no gaps.
+  function masonry(photos, altText) {
+    const tiles = photos.map((p, i) => {
+      const a = document.createElement("a");
+      a.className = "tile";
+      a.href = p.src;
+      a.dataset.index = i;
+      a.style.aspectRatio = p.w && p.h ? `${p.w} / ${p.h}` : "4 / 5";
+      a.innerHTML = `<img data-src="${esc(p.src)}" alt="${esc(p.caption || altText)}">`;
+      const img = a.firstChild;
+      img.addEventListener("load", () => {
+        if (!p.w) { p.w = img.naturalWidth; p.h = img.naturalHeight; a.style.aspectRatio = `${p.w} / ${p.h}`; }
+        a.classList.add("loaded");
+      });
+      io.observe(img);
+      return a;
+    });
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    let cols = 0;
+    const layout = () => {
+      // 1 column on phones, 2 on laptops, 3 on wide monitors
+      const w = window.innerWidth;
+      const n = w <= 760 ? 1 : w < 1500 ? 2 : 3;
+      if (n === cols) return;
+      cols = n;
+      const columns = Array.from({ length: n }, () => {
+        const c = document.createElement("div");
+        c.className = "col";
+        return c;
+      });
+      const heights = new Array(n).fill(0);
+      tiles.forEach((t, i) => {
+        const k = heights.indexOf(Math.min(...heights));
+        columns[k].appendChild(t);
+        const p = photos[i];
+        heights[k] += p.w && p.h ? p.h / p.w : 1.25;
+      });
+      grid.replaceChildren(...columns);
+    };
+    grid.addEventListener("click", (e) => {
+      const tile = e.target.closest(".tile");
+      if (!tile) return;
+      e.preventDefault();
+      openLightbox(photos, +tile.dataset.index);
+    });
+    return { grid, layout };
+  }
+
   /* ---------- Renderers ---------- */
   const renderers = {
     gallery(page) {
-      const fromFolder = typeof PHOTOS !== "undefined" && PHOTOS[page.folder];
-      const photos = (fromFolder && fromFolder.length ? fromFolder : page.photos || []).map((p) => {
+      const all = typeof PHOTOS !== "undefined" ? PHOTOS : {};
+      const prep = (list) => list.map((p) => {
         p = norm(p);
         const key = p.src.split("/").pop().replace(/\.[^.]+$/, "");
         return { ...p, caption: p.caption || (page.captions || {})[key] || "" };
       });
-
-      // Masonry: each photo goes into whichever column is currently shortest,
-      // so every photo keeps its own ratio and there are no gaps.
-      const tiles = photos.map((p, i) => {
-        const a = document.createElement("a");
-        a.className = "tile";
-        a.href = p.src;
-        a.dataset.index = i;
-        a.style.aspectRatio = p.w && p.h ? `${p.w} / ${p.h}` : "4 / 5";
-        a.innerHTML = `<img data-src="${esc(p.src)}" alt="${esc(p.caption || page.title)}">`;
-        const img = a.firstChild;
-        img.addEventListener("load", () => {
-          if (!p.w) { p.w = img.naturalWidth; p.h = img.naturalHeight; a.style.aspectRatio = `${p.w} / ${p.h}`; }
-          a.classList.add("loaded");
-        });
-        io.observe(img);
-        return a;
-      });
-
-      const grid = document.createElement("div");
-      grid.className = "grid";
-      content.replaceChildren(grid);
-
-      let cols = 0;
-      const layout = () => {
-        // 1 column on phones, 2 on laptops, 3 on wide monitors
-        const w = window.innerWidth;
-        const n = w <= 760 ? 1 : w < 1500 ? 2 : 3;
-        if (n === cols) return;
-        cols = n;
-        const columns = Array.from({ length: n }, () => {
-          const c = document.createElement("div");
-          c.className = "col";
-          return c;
-        });
-        const heights = new Array(n).fill(0);
-        tiles.forEach((t, i) => {
-          const k = heights.indexOf(Math.min(...heights));
-          columns[k].appendChild(t);
-          const p = photos[i];
-          heights[k] += p.w && p.h ? p.h / p.w : 1.25;
-        });
-        grid.replaceChildren(...columns);
+      // "bromo" -> "Bromo", "krabi-2025" -> "Krabi 2025"; "Cappadocia, Turkey" stays as is
+      const prettify = (name) => {
+        const s = name.replace(/[-_]+/g, " ").trim();
+        return s === s.toLowerCase() ? s.replace(/\b\w/g, (c) => c.toUpperCase()) : s;
       };
-      layout();
-      window.onresize = layout;
 
-      grid.addEventListener("click", (e) => {
-        const tile = e.target.closest(".tile");
-        if (!tile) return;
-        e.preventDefault();
-        openLightbox(photos, +tile.dataset.index);
+      // Place sections come from subfolders, e.g. photos/travel/bromo
+      const sections = Object.keys(all)
+        .filter((k) => page.folder && k.startsWith(page.folder + "/"))
+        .map((k) => ({ title: prettify(k.split("/").pop()), photos: prep(all[k]) }));
+      const loose = prep((all[page.folder] || []).length ? all[page.folder] : sections.length ? [] : page.photos || []);
+      if (loose.length) sections.push({ title: sections.length ? "Other" : "", photos: loose });
+
+      const layouts = [];
+      const frag = document.createDocumentFragment();
+      if (sections.length > 1) {
+        const nav = document.createElement("nav");
+        nav.className = "place-nav";
+        sections.forEach((s, i) => {
+          const b = document.createElement("button");
+          b.textContent = s.title;
+          b.onclick = () => document.getElementById(`place-${i}`).scrollIntoView({ behavior: "smooth" });
+          nav.appendChild(b);
+        });
+        frag.appendChild(nav);
+      }
+      sections.forEach((s, i) => {
+        const sec = document.createElement("section");
+        sec.className = "place";
+        sec.id = `place-${i}`;
+        if (s.title) {
+          sec.innerHTML = `<h2 class="place-title">${esc(s.title)}<span>${s.photos.length}</span></h2>`;
+        }
+        const { grid, layout } = masonry(s.photos, page.title);
+        sec.appendChild(grid);
+        frag.appendChild(sec);
+        layouts.push(layout);
       });
+      content.replaceChildren(frag);
+      layouts.forEach((f) => f());
+      window.onresize = () => layouts.forEach((f) => f());
     },
 
     videos(page) {

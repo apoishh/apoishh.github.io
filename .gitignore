@@ -1,9 +1,8 @@
 # Only the small web copies of photos go online.
 # Originals and RAW files stay on your PC.
 photos/**
-!photos/*/
-!photos/*/web/
-!photos/*/web/**
+!photos/**/
+!photos/**/web/**
 
 # Local-only stuff
 __pycache__/
