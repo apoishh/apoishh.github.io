@@ -35,6 +35,11 @@ const SITE = {
   youtubeChannel: "https://www.youtube.com/@apoishhh",
   email: "redrazzor728@gmail.com",
 
+  // Message form on the About page. Get a free key at https://web3forms.com
+  // (enter your email, the key arrives in your inbox) and paste it here.
+  // Until then, "Send" opens the visitor's email app instead.
+  web3formsKey: "",
+
   // The first page is the home page.
   pages: [
     {

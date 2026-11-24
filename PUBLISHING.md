@@ -28,16 +28,23 @@ small web copies of your photos are included. Originals and RAWs stay on your PC
    Workflow permissions → *Read and write permissions* → Save.
    To test it now: **Actions** tab → *Update YouTube videos* → **Run workflow**.
 
-## Updating the site later
+## Updating the site later (automatic)
 
-1. Double-click `start.bat` and drop new photos into the folders.
-   Check them at http://localhost:8080.
-2. Open GitHub Desktop. Your changes are listed. Type a short summary
-   (e.g. "Add Japan photos") → **Commit to main** → **Push origin**.
-3. The live site updates in 1–2 minutes.
+1. Double-click `start.bat` and leave its window open.
+2. Drop new photos into the folders, or edit `js/config.js`.
+3. About a minute after you stop making changes, they're committed and pushed
+   to GitHub automatically. The window shows "Published to GitHub".
+   The live site updates 1–2 minutes later.
 
-If GitHub Desktop says there are new changes on GitHub (from the daily YouTube
-refresh), click **Pull origin** first, then push.
+Notes:
+- It only publishes while `start.bat` is running. Changes made while it's
+  closed get published the next time you start it.
+- Want to edit without publishing yet? Run `python serve.py --no-sync` instead.
+- The first push may open a GitHub sign-in window. Sign in once and it's remembered.
+- If the window says it couldn't pull or push, open GitHub Desktop to see why.
+
+You can still publish by hand in GitHub Desktop (**Commit to main** →
+**Push origin**) whenever you like.
 
 ## Custom domain (e.g. apoishh.com)
 

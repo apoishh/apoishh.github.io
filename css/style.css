@@ -158,6 +158,48 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .contact a:hover { border-color: currentColor; }
 
+/* ---------- Message form ---------- */
+.message-form { margin-top: 48px; display: grid; gap: 16px; max-width: 460px; }
+.message-form .section-label { margin-bottom: 0; }
+.message-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.message-form input, .message-form textarea {
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #3a3a3a;
+  padding: 8px 0;
+  border-radius: 0;
+  resize: vertical;
+  transition: border-color .2s;
+}
+.message-form input:focus, .message-form textarea:focus { outline: none; border-color: var(--fg); }
+.message-form button {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 12px 28px;
+  border: 1px solid var(--fg);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: background .2s, color .2s;
+}
+.message-form button:hover { background: var(--fg); color: var(--bg); }
+.message-form button:disabled { opacity: .5; pointer-events: none; }
+.form-status { font-size: 12px; min-height: 1em; }
+.form-status.error { color: #e08a7a; }
+.hp { position: absolute; left: -9999px; }
+
 /* ---------- Lightbox ---------- */
 .lightbox {
   position: fixed;

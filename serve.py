@@ -8,11 +8,13 @@ a folder, then refresh the page.
 """
 import functools
 import http.server
+import sys
 import threading
 import webbrowser
 from pathlib import Path
 
 import update_photos
+import git_sync  # auto-publishes changes to GitHub (skip with --no-sync)
 # The YouTube list is refreshed daily by GitHub (.github/workflows), so it
 # isn't refreshed here - that would clash when syncing. Run
 # `python update_videos.py` by hand if you want a fresh list locally.
@@ -31,10 +33,12 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
 
 threading.Thread(target=update_photos.watch, daemon=True).start()
+if "--no-sync" not in sys.argv:
+    threading.Thread(target=git_sync.run, daemon=True).start()
 handler = functools.partial(NoCacheHandler, directory=str(ROOT))
 server = http.server.ThreadingHTTPServer(("localhost", PORT), handler)
 print(f"Site running at http://localhost:{PORT}")
-if __name__ == "__main__" and "--no-browser" not in __import__("sys").argv:
+if __name__ == "__main__" and "--no-browser" not in sys.argv:
     webbrowser.open(f"http://localhost:{PORT}")
 try:
     server.serve_forever()

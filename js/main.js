@@ -148,10 +148,70 @@
               ${SITE.instagram ? `<a href="${esc(SITE.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ""}
               ${SITE.youtubeChannel ? `<a href="${esc(SITE.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>` : ""}
             </div>
+            ${SITE.email || SITE.web3formsKey ? `
+            <form class="message-form" id="messageForm" novalidate>
+              <p class="section-label">Send me a message</p>
+              <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+              <label>Name<input name="name" required autocomplete="name"></label>
+              <label>Email<input name="email" type="email" required autocomplete="email"></label>
+              <label>Message<textarea name="message" rows="5" required></textarea></label>
+              <button type="submit">Send</button>
+              <p class="form-status" id="formStatus" role="status"></p>
+            </form>` : ""}
           </div>
         </div>`;
+      const form = $("messageForm");
+      if (form) form.addEventListener("submit", sendMessage);
     },
   };
+
+  /* ---------- Message form ---------- */
+  async function sendMessage(e) {
+    e.preventDefault();
+    const form = e.target, status = $("formStatus"), button = form.querySelector("button");
+    const data = Object.fromEntries(new FormData(form));
+    if (data.botcheck) return; // spam bot filled the hidden box
+    if (!data.name.trim() || !data.message.trim() || !form.email.checkValidity() || !data.email) {
+      status.textContent = "Please fill in your name, a valid email and a message.";
+      status.className = "form-status error";
+      return;
+    }
+
+    // No form service set up yet: open the visitor's email app instead.
+    if (!SITE.web3formsKey) {
+      const subject = encodeURIComponent(`Message from ${data.name} via your portfolio`);
+      const body = encodeURIComponent(`${data.message}\n\n${data.name}\n${data.email}`);
+      location.href = `mailto:${SITE.email}?subject=${subject}&body=${body}`;
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Sending…";
+    status.className = "form-status";
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: SITE.web3formsKey,
+          subject: `New message from ${data.name} (portfolio)`,
+          from_name: "Portfolio website",
+          name: data.name,
+          email: data.email,
+          message: data.message,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      form.reset();
+      status.textContent = "Thanks! Your message was sent. I'll get back to you soon.";
+    } catch (err) {
+      status.textContent = `Couldn't send right now. Please email me at ${SITE.email}.`;
+      status.className = "form-status error";
+    } finally {
+      button.disabled = false;
+    }
+  }
 
   /* ---------- Router ---------- */
   function route() {
