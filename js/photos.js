@@ -183,6 +183,11 @@ const PHOTOS = {
       "h": 1333
     },
     {
+      "src": "photos/travel/Bromo/web/DSC00477.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
       "src": "photos/travel/Bromo/web/DSC00530.jpg",
       "w": 1333,
       "h": 2000
@@ -193,7 +198,27 @@ const PHOTOS = {
       "h": 1333
     },
     {
+      "src": "photos/travel/Bromo/web/DSC00780.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
       "src": "photos/travel/Bromo/web/DSC00953.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Bromo/web/DSC01098.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Bromo/web/DSC01374.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Bromo/web/DSC01605.jpg",
       "w": 2000,
       "h": 1333
     },
@@ -290,6 +315,11 @@ const PHOTOS = {
   ],
   "travel/Turkey": [
     {
+      "src": "photos/travel/Turkey/web/DSC03966.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
       "src": "photos/travel/Turkey/web/DSC04005.jpg",
       "w": 2000,
       "h": 1333
@@ -335,9 +365,19 @@ const PHOTOS = {
       "h": 1333
     },
     {
+      "src": "photos/travel/Turkey/web/DSC04480.jpg",
+      "w": 1333,
+      "h": 2000
+    },
+    {
       "src": "photos/travel/Turkey/web/DSC04540.jpg",
       "w": 2000,
       "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04557.jpg",
+      "w": 1333,
+      "h": 2000
     },
     {
       "src": "photos/travel/Turkey/web/DSC04560.jpg",
@@ -346,11 +386,6 @@ const PHOTOS = {
     },
     {
       "src": "photos/travel/Turkey/web/DSC04602.jpg",
-      "w": 2000,
-      "h": 1333
-    },
-    {
-      "src": "photos/travel/Turkey/web/DSC04726.jpg",
       "w": 2000,
       "h": 1333
     },
@@ -433,6 +468,31 @@ const PHOTOS = {
       "src": "photos/travel/Turkey/web/DSC05790.jpg",
       "w": 1333,
       "h": 2000
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05909.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05920.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05940.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC05967.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC06067.jpg",
+      "w": 2000,
+      "h": 1333
     }
   ]
 };
