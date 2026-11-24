@@ -308,6 +308,31 @@ const PHOTOS = {
       "src": "photos/travel/Turkey/web/DSC04185.jpg",
       "w": 2000,
       "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04237.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04251.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04289.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04407.jpg",
+      "w": 1333,
+      "h": 2000
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04425.jpg",
+      "w": 2000,
+      "h": 1333
     }
   ]
 };
