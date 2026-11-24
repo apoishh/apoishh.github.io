@@ -40,6 +40,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   text-transform: uppercase;
 }
 .brand span { display: block; }
+.brand span:first-child {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.brand span:last-child { color: var(--muted); }
 .subtitle {
   margin-top: 40px;
   font-size: 9px;
@@ -272,6 +280,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     overflow: visible;
   }
   .subtitle { display: none; }
+  .brand span:first-child { font-size: 22px; margin-bottom: 4px; }
   .menu-toggle {
     display: flex;
     flex-direction: column;
