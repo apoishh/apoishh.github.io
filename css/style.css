@@ -3,7 +3,7 @@
   --fg: #f2f2f2;
   --muted: #8a8a8a;
   --placeholder: #141414;
-  --sidebar-w: 200px;
+  --sidebar-w: 220px;
   --gap: 28px;
   --font: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -25,51 +25,69 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--sidebar-w);
-  padding: 110px 24px 24px;
+  padding: 64px 28px 28px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   z-index: 10;
   background: var(--bg);
 }
-.brand {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  line-height: 1.25;
-  text-transform: uppercase;
-}
+.brand { display: block; width: fit-content; text-transform: uppercase; }
 .brand span { display: block; }
 .brand span:first-child {
   font-size: 28px;
   font-weight: 600;
-  letter-spacing: .02em;
+  letter-spacing: .03em;
   line-height: 1;
-  margin-bottom: 8px;
 }
-.brand span:last-child { color: var(--muted); }
-.subtitle {
-  margin-top: 40px;
-  font-size: 9px;
-  letter-spacing: .06em;
-  line-height: 1.4;
-  text-transform: uppercase;
+.brand span:last-child {
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .28em;
+  color: var(--muted);
 }
-.nav { margin-top: 36px; display: flex; flex-direction: column; gap: 17px; }
+
+/* Menu: grey links, the page you're on is white with a short line */
+.nav { margin-top: 64px; display: flex; flex-direction: column; gap: 2px; }
 .nav a {
-  font-size: 12px;
-  font-weight: 600;
-  transition: opacity .2s;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 7px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: color .2s, gap .25s;
 }
-.nav a:hover { opacity: .6; }
-.nav a.active { color: var(--muted); font-weight: 500; }
+.nav a::before {
+  content: "";
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width .25s;
+}
+.nav a:hover { color: var(--fg); }
+.nav a.active { color: var(--fg); gap: 10px; }
+.nav a.active::before { width: 16px; }
+
+/* Places listed under Travel */
+.subnav { display: flex; flex-direction: column; margin: 2px 0 8px 26px; }
+.subnav button {
+  text-align: left;
+  padding: 5px 0;
+  font-size: 12px;
+  color: var(--muted);
+  transition: color .2s;
+}
+.subnav button:hover { color: var(--fg); }
 
 .side-footer { margin-top: auto; padding-top: 40px; }
-.socials { display: flex; gap: 12px; margin-bottom: 10px; }
-.socials a { opacity: .9; }
-.socials a:hover { opacity: .5; }
-.socials svg { width: 13px; height: 13px; fill: currentColor; display: block; }
-.copyright { font-size: 8px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.4; }
+.socials { display: flex; gap: 16px; margin-bottom: 14px; }
+.socials a { color: var(--muted); transition: color .2s; }
+.socials a:hover { color: var(--fg); }
+.socials svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+.copyright { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.5; color: var(--muted); }
 
 .menu-toggle { display: none; }
 
@@ -107,7 +125,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .tile:hover img { opacity: .85; }
 
 /* ---------- Place sections (Travel) ---------- */
-.place-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 48px; }
+/* On desktop the places are listed in the side menu; this row is for phones */
+.place-nav { display: none; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 40px; }
+@media (max-width: 760px) { .place-nav { display: flex; } }
 .place-nav button {
   font-size: 11px;
   letter-spacing: .1em;
@@ -279,7 +299,6 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     align-items: center;
     overflow: visible;
   }
-  .subtitle { display: none; }
   .brand span:first-child { font-size: 22px; margin-bottom: 4px; }
   .menu-toggle {
     display: flex;

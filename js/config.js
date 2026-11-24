@@ -29,8 +29,7 @@ function demo(seed, count) {
 
 const SITE = {
   name: "APOISHH",
-  tagline: "Portfolio",
-  subtitle: "Pre-Convo & Travel",
+  tagline: "Photography", // small line under your name
   instagram: "https://instagram.com/apoishh",
   youtubeChannel: "https://www.youtube.com/@apoishhh",
   email: "redrazzor728@gmail.com",

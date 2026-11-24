@@ -16,7 +16,6 @@
   /* ---------- Sidebar ---------- */
   $("brand").innerHTML = `<span>${esc(SITE.name)}</span><span>${esc(SITE.tagline)}</span>`;
   $("brand").href = "#/" + SITE.pages[0].id;
-  $("subtitle").innerHTML = esc(SITE.subtitle);
   $("nav").innerHTML = SITE.pages
     .map((p) => `<a href="#/${esc(p.id)}" data-id="${esc(p.id)}">${esc(p.title)}</a>`)
     .join("");
@@ -119,6 +118,22 @@
         .map((k) => ({ title: prettify(k.split("/").pop()), photos: prep(all[k]) }));
       const loose = prep((all[page.folder] || []).length ? all[page.folder] : sections.length ? [] : page.photos || []);
       if (loose.length) sections.push({ title: sections.length ? "Other" : "", photos: loose });
+
+      // List the places under this page's link in the menu
+      const titled = sections.filter((s) => s.title);
+      const link = document.querySelector(`.nav a[data-id="${page.id}"]`);
+      if (titled.length && link) {
+        const sub = document.createElement("div");
+        sub.className = "subnav";
+        sections.forEach((s, i) => {
+          if (!s.title) return;
+          const b = document.createElement("button");
+          b.textContent = s.title;
+          b.onclick = () => document.getElementById(`place-${i}`).scrollIntoView({ behavior: "smooth" });
+          sub.appendChild(b);
+        });
+        link.after(sub);
+      }
 
       const layouts = [];
       const frag = document.createDocumentFragment();
@@ -264,6 +279,7 @@
     void content.offsetWidth;
     content.style.animation = "";
     window.onresize = null;
+    document.querySelectorAll(".subnav").forEach((el) => el.remove());
     (renderers[page.type] || renderers.gallery)(page);
     window.scrollTo(0, 0);
   }
