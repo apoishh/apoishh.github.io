@@ -20,7 +20,11 @@ in `update_photos.py`.
 
 **Place sections:** make a subfolder per place, e.g. `photos/travel/Bromo`,
 `photos/travel/Krabi 2025`. Each becomes its own titled section on the page,
-with jump links at the top. The place you added to most recently comes first.
+with jump links at the top.
+
+**Travel order** uses the date the camera stored in each photo: most recent
+trip first, and photos inside a trip in the order you took them. Other pages
+show the most recently added photos first. (`BY_DATE_TAKEN` in `update_photos.py`.)
 
 RAW files (.ARW, .CR2, .NEF, .DNG, ...) work too: the script uses the camera's
 built-in full-size preview. If a RAW and a JPG share a name, the JPG wins.

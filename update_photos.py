@@ -13,10 +13,13 @@ For every folder in photos/ (e.g. photos/preconvo, photos/travel) it:
 
 Place sections: make subfolders, e.g. photos/travel/Bromo, photos/travel/Turkey.
 Each becomes its own section on that page, titled with the folder name.
-The place you added photos to most recently comes first.
 
-Order: most recently added photo first (by when the file landed in the folder).
-Set NEWEST_FIRST = False below for oldest first.
+Order:
+  - Pages in BY_DATE_TAKEN (Travel): trips ordered by when you went there
+    (most recent trip first), and photos inside a trip in the order you took them.
+    Uses the date the camera stored in each photo.
+  - Other pages (Pre-Convo): most recently added photo first.
+Set NEWEST_FIRST = False below to flip both to oldest first.
 
 RAW files (.ARW, .CR2, .NEF, ...) work too. If a RAW and a JPG share a name
 (DSC0001.ARW + DSC0001.JPG) the JPG is used, so your edits win.
@@ -36,6 +39,7 @@ OUT_JS = ROOT / "js" / "photos.js"
 LONG_EDGE = 2000
 QUALITY = 82
 NEWEST_FIRST = True
+BY_DATE_TAKEN = {"travel"}  # pages ordered by the date photos were taken
 EXTS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
 RAW_EXTS = {".arw", ".cr2", ".cr3", ".nef", ".raf", ".rw2", ".orf", ".dng", ".pef", ".srw"}
 
@@ -44,6 +48,39 @@ def added_time(p):
     st = p.stat()
     # On Windows st_ctime is when the file was created in this folder.
     return getattr(st, "st_birthtime", st.st_ctime)
+
+
+_taken_cache = {}
+
+
+def taken_time(p):
+    """When the photo was taken, from the camera's EXIF data.
+    Falls back to the file's modified time (usually the shoot date too)."""
+    st = p.stat()
+    key = (str(p), st.st_mtime, st.st_size)
+    if key in _taken_cache:
+        return _taken_cache[key]
+    stamp = None
+    try:
+        if p.suffix.lower() in RAW_EXTS:
+            import rawpy
+            with rawpy.imread(str(p)) as raw:
+                thumb = raw.extract_thumb()
+                exif = Image.open(io.BytesIO(thumb.data)).getexif()
+        else:
+            with Image.open(p) as im:
+                exif = im.getexif()
+        text = exif.get_ifd(0x8769).get(36867) or exif.get(306)  # DateTimeOriginal / DateTime
+        if text:
+            stamp = time.mktime(time.strptime(text.strip()[:19], "%Y:%m:%d %H:%M:%S"))
+    except Exception:
+        pass
+    _taken_cache[key] = stamp or st.st_mtime
+    return _taken_cache[key]
+
+
+def by_date_taken(folder):
+    return folder.relative_to(PHOTOS).parts[0] in BY_DATE_TAKEN
 
 
 def originals_in(folder):
@@ -55,6 +92,10 @@ def originals_in(folder):
         cur = by_stem.get(p.stem.lower())
         if cur is None or (cur.suffix.lower() in RAW_EXTS and p.suffix.lower() in EXTS):
             by_stem[p.stem.lower()] = p
+    if by_date_taken(folder):
+        # a trip reads like a story: first shot to last
+        return sorted(by_stem.values(), key=lambda p: (taken_time(p), p.name),
+                      reverse=not NEWEST_FIRST)
     return sorted(by_stem.values(), key=lambda p: (added_time(p), p.name),
                   reverse=NEWEST_FIRST)
 
@@ -120,10 +161,12 @@ def build():
         if items:
             key = folder.relative_to(PHOTOS).as_posix()  # e.g. "travel/bromo"
             result[key] = items
-            newest[key] = max(added_time(p) for p in originals)
+            stamp = taken_time if by_date_taken(folder) else added_time
+            newest[key] = max(stamp(p) for p in originals)
             print(f"  {key}: {len(items)} photos")
 
-    # Pages in name order; place sections inside a page newest-added first.
+    # Pages in name order; place sections inside a page newest first
+    # (latest trip for Travel, latest added for other pages).
     def order(key):
         top, *rest = key.split("/")
         return (top, bool(rest), -newest[key] if NEWEST_FIRST else newest[key])
