@@ -333,6 +333,11 @@ const PHOTOS = {
       "src": "photos/travel/Turkey/web/DSC04425.jpg",
       "w": 2000,
       "h": 1333
+    },
+    {
+      "src": "photos/travel/Turkey/web/DSC04540.jpg",
+      "w": 2000,
+      "h": 1333
     }
   ]
 };
