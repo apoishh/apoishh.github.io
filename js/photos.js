@@ -293,6 +293,11 @@ const PHOTOS = {
       "h": 1333
     },
     {
+      "src": "photos/travel/Bromo/web/DSC02767.jpg",
+      "w": 2000,
+      "h": 1333
+    },
+    {
       "src": "photos/travel/Bromo/web/DSC02871.jpg",
       "w": 1333,
       "h": 2000
