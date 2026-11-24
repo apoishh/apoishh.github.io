@@ -114,8 +114,23 @@ def run():
         time.sleep(CHECK_EVERY)
 
 
+def publish_now():
+    """Publish immediately (used by publish.bat)."""
+    import update_photos
+    update_photos.build()  # make sure new photos are processed first
+    snap = changes()
+    if snap:
+        publish(snap)
+    elif unpushed():
+        code, out = git("push", "origin", "HEAD:main")
+        log("Published to GitHub." if code == 0 else "Push failed: " + out)
+    else:
+        log("Nothing new to publish - the site is up to date.")
+
+
 if __name__ == "__main__":
+    import sys
     try:
-        run()
+        publish_now() if "--now" in sys.argv else run()
     except KeyboardInterrupt:
         pass

@@ -43,8 +43,15 @@ Notes:
 - The first push may open a GitHub sign-in window. Sign in once and it's remembered.
 - If the window says it couldn't pull or push, open GitHub Desktop to see why.
 
-You can still publish by hand in GitHub Desktop (**Commit to main** →
-**Push origin**) whenever you like.
+## Publish right now (manual)
+
+Double-click **`publish.bat`**. It processes any new photos and pushes to
+GitHub immediately, with no 60-second wait. It works whether or not `start.bat`
+is open. GitHub Desktop (**Commit to main** → **Push origin**) works too.
+
+## Don't see your changes on the live site?
+Browsers keep GitHub Pages files for up to 10 minutes. Press **Ctrl+F5**
+on the site to force a fresh copy.
 
 ## Custom domain (e.g. apoishh.com)
 
