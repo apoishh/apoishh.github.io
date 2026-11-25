@@ -42,7 +42,10 @@ featured). Forks and repos listed in `hide` (in `config.js`) are left out.
 Each card shows every language the repo uses (with percentages).
 Descriptions come from `descriptions` in `config.js`, or from the repo's
 description on GitHub if it isn't listed there. Repos with GitHub Pages get an
-"Open live" button automatically. The "Coding activity" graph is your GitHub
+"Open live" button automatically (fix the address in `live` in `config.js`
+if it's wrong). Projects with a live site get a screenshot preview and a
+bigger tile: `python update_previews.py` takes them (run it from a normal
+Windows window), and the daily GitHub job adds previews for new projects. The "Coding activity" graph is your GitHub
 contribution calendar for the last 12 months (via a free public mirror,
 github-contributions-api.jogruber.de, since GitHub only offers it to signed-in apps).
 

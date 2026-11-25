@@ -1,7 +1,8 @@
-# Refreshes the YouTube page (latest upload + 4 most viewed) once a day,
-# even when your PC is off. You can also run it by hand from the
-# Actions tab on GitHub ("Run workflow").
-name: Update YouTube videos
+# Once a day, even when your PC is off:
+#  - refreshes the YouTube page (latest upload + 4 most viewed)
+#  - takes website previews for new projects (and retakes ones older than a week)
+# You can also run it by hand from the Actions tab on GitHub ("Run workflow").
+name: Update YouTube videos and project previews
 
 on:
   schedule:
@@ -19,16 +20,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install yt-dlp
-      - run: python update_videos.py
+      - run: pip install yt-dlp pillow
+      - name: YouTube videos
+        run: python update_videos.py
+        continue-on-error: true
+      - name: Project previews
+        run: python update_previews.py
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Save changes
         run: |
-          if git diff --quiet js/videos.js; then
+          if [ -z "$(git status --porcelain js/videos.js js/previews.js previews)" ]; then
             echo "No changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add js/videos.js
-            git commit -m "Update YouTube videos"
+            git add js/videos.js js/previews.js previews
+            git commit -m "Update YouTube videos and project previews"
             git push
           fi

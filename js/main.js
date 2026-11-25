@@ -142,7 +142,7 @@
       <section class="activity">
         <p class="section-label">Coding activity</p>
         <p class="activity-total"><strong>${total}</strong> contributions in the last year</p>
-        <div class="heatmap-scroll"><div class="heatmap">
+        <div class="heatmap-scroll"><div class="heatmap" style="--weeks:${Math.ceil((lead + days.length) / 7)}">
           <div class="heatmap-months">${months.map((m) => `<span style="grid-column:${m.col + 1}">${m.name}</span>`).join("")}</div>
           <div class="heatmap-grid">${cells.join("")}</div>
         </div></div>
@@ -174,9 +174,8 @@
     grid.className = "grid";
     let cols = 0;
     const layout = () => {
-      // 1 column on phones, 2 on laptops, 3 on wide monitors
-      const w = window.innerWidth;
-      const n = w <= 760 ? 1 : w < 1500 ? 2 : 3;
+      // 2 columns on phones and laptops, 3 on wide monitors
+      const n = window.innerWidth < 1500 ? 2 : 3;
       if (n === cols) return;
       cols = n;
       const columns = Array.from({ length: n }, () => {
@@ -287,10 +286,20 @@
       const activity = contribResult.status === "fulfilled" ? contributionGraph(contribResult.value) : "";
 
       const ownDesc = page.descriptions || {};
+      const previews = typeof PREVIEWS !== "undefined" ? PREVIEWS : {};
       const card = (r, i, featured) => {
         const desc = ownDesc[r.name] || r.description;
+        const live = (page.live || {})[r.name] || r.live;
+        const shot = previews[r.name];
+        // Projects with a live site show a screenshot and get a bigger tile
+        const preview = shot ? `
+          <a class="repo-shot" href="${esc(live || r.url)}" target="_blank" rel="noopener" tabindex="-1">
+            <img src="${esc(shot.src)}" alt="Preview of ${esc(prettyName(r.name))}" loading="lazy" width="${shot.w}" height="${shot.h}">
+          </a>` : "";
         return `
-          <article class="repo${featured ? " repo-featured" : ""}">
+          <article class="repo${featured ? " repo-featured" : ""}${shot ? " has-shot" : ""}">
+            ${preview}
+            <div class="repo-info">
             <div class="repo-head">
               <span class="repo-no">${featured ? "Latest project" : String(i + 1).padStart(2, "0")}</span>
               <span class="repo-when">Updated ${timeAgo(r.pushed)}${r.stars ? ` &middot; &#9733; ${r.stars}` : ""}</span>
@@ -299,16 +308,17 @@
             <p class="repo-desc">${desc ? esc(desc) : "<span>No description yet.</span>"}</p>
             ${languageBlock(r.languages)}
             <p class="repo-links">
-              ${r.live ? `<a class="primary" href="${esc(r.live)}" target="_blank" rel="noopener">Open live &rarr;</a>` : ""}
+              ${live ? `<a class="primary" href="${esc(live)}" target="_blank" rel="noopener">Open live &rarr;</a>` : ""}
               <a href="${esc(r.url)}" target="_blank" rel="noopener">View code &rarr;</a>
             </p>
+            </div>
           </article>`;
       };
 
       content.innerHTML = repos.length ? `
         <div class="projects-top">
-          ${card(repos[0], 0, true)}
           ${activity}
+          ${card(repos[0], 0, true)}
         </div>
         ${repos.length > 1 ? `<p class="section-label">More projects</p>
           <div class="repo-grid">${repos.slice(1).map((r, i) => card(r, i + 1)).join("")}</div>` : ""}

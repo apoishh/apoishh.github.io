@@ -190,7 +190,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 /* ---------- Projects (GitHub) ---------- */
 /* Clean text cards: thin border, name, description, languages, links */
-.projects-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-bottom: 72px; max-width: 1200px; }
+.projects-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-bottom: 72px; }
 .projects-top > * { min-width: 0; }
 .repo {
   display: flex;
@@ -238,7 +238,38 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .repo-links a.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .repo-links a.primary:hover { background: transparent; color: var(--fg); }
 
+/* Website preview screenshots */
+.repo-info { display: flex; flex-direction: column; flex: 1; }
+.repo-shot {
+  display: block;
+  margin: -28px -28px 24px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid #222;
+  background: var(--placeholder);
+}
+.repo-shot img {
+  width: 100%; height: 100%; object-fit: cover; object-position: top;
+  display: block; opacity: .9;
+  transition: transform .5s ease, opacity .3s;
+}
+.repo:hover .repo-shot img { opacity: 1; transform: scale(1.02); }
+@media (min-width: 1100px) {
+  .repo-grid .has-shot { grid-column: span 2; } /* bigger tile for projects with a live site */
+}
+
 .repo-featured { padding: 40px; border-color: #333; }
+.repo-featured.has-shot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 40px;
+  align-items: center;
+}
+.repo-featured .repo-shot { order: 2; margin: 0; border: 1px solid #2a2a2a; }
+@media (max-width: 1100px) {
+  .repo-featured.has-shot { grid-template-columns: 1fr; gap: 24px; }
+  .repo-featured .repo-shot { order: 0; }
+}
 .repo-featured .repo-head { color: var(--fg); }
 .repo-featured h2 { font-size: 38px; letter-spacing: -.015em; line-height: 1.05; }
 .repo-featured .repo-desc { font-size: 15px; }
@@ -256,12 +287,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .activity-total { font-size: 13px; color: #bdbdbd; margin-bottom: 18px; }
 .activity-total strong { color: var(--fg); font-size: 18px; font-weight: 500; margin-right: 4px; }
 .heatmap-scroll { overflow-x: auto; padding-bottom: 6px; }
-.heatmap { display: inline-grid; gap: 6px; }
-.heatmap-months, .heatmap-grid { display: grid; grid-auto-columns: 12px; gap: 3px; }
-.heatmap-months { grid-auto-flow: column; font-size: 10px; color: var(--muted); height: 12px; }
-.heatmap-months span { white-space: nowrap; }
-.heatmap-grid { grid-template-rows: repeat(7, 12px); grid-auto-flow: column; }
-.heatmap-grid i, .heatmap-legend i { display: block; width: 12px; height: 12px; border-radius: 2px; }
+/* Stretches edge to edge: one column per week, square cells that grow with the width */
+.heatmap { display: grid; gap: 8px; width: 100%; min-width: calc(var(--weeks) * 12px); }
+.heatmap-months, .heatmap-grid { display: grid; grid-template-columns: repeat(var(--weeks), minmax(0, 1fr)); column-gap: 3px; }
+.heatmap-months { font-size: 10px; color: var(--muted); }
+.heatmap-months span { grid-row: 1; white-space: nowrap; }
+.heatmap-grid { grid-template-rows: repeat(7, auto); grid-auto-flow: column; row-gap: 3px; }
+.heatmap-grid i { display: block; width: 100%; aspect-ratio: 1; border-radius: 2px; }
+.heatmap-legend i { display: block; width: 12px; height: 12px; border-radius: 2px; }
 .l0 { background: #171717; }
 .l1 { background: rgba(255, 255, 255, .2); }
 .l2 { background: rgba(255, 255, 255, .4); }
@@ -273,6 +306,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 @media (max-width: 760px) {
   .repo, .activity { padding: 22px; }
+  .repo-shot { margin: -22px -22px 20px; }
   .repo-featured { padding: 24px; }
   .repo-featured h2 { font-size: 28px; }
   .repo-grid { grid-template-columns: 1fr; }
@@ -407,7 +441,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .sidebar.open .side-footer { display: block; padding-top: 48px; }
 
   .content { margin-left: 0; padding: 84px 16px 48px; }
-  .grid, .col { gap: 16px; }
+  .grid, .col { gap: 8px; } /* two photo columns on phones, tighter gaps */
   .place + .place { margin-top: 64px; }
   .place-title { font-size: 20px; }
   .place { scroll-margin-top: 80px; }

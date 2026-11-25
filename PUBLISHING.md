@@ -28,26 +28,22 @@ small web copies of your photos are included. Originals and RAWs stay on your PC
    Workflow permissions → *Read and write permissions* → Save.
    To test it now: **Actions** tab → *Update YouTube videos* → **Run workflow**.
 
-## Updating the site later (automatic)
+## Updating the site later: just `start.bat`
 
-1. Double-click `start.bat` and leave its window open.
+1. Double-click **`start.bat`** and leave its window open.
+   Your site opens at http://localhost:8080 to preview.
 2. Drop new photos into the folders, or edit `js/config.js`.
-3. About a minute after you stop making changes, they're committed and pushed
-   to GitHub automatically. The window shows "Published to GitHub".
-   The live site updates 1–2 minutes later.
+3. About 20 seconds after you stop making changes, the window lists what
+   changed and asks **Publish to GitHub now?**
+   - Type **y** + Enter → published. The live site updates 1–2 minutes later.
+   - Type **n** + Enter → nothing is published. It asks again after your next change.
+4. Type **p** + Enter at any time to publish straight away.
 
 Notes:
-- It only publishes while `start.bat` is running. Changes made while it's
-  closed get published the next time you start it.
-- Want to edit without publishing yet? Run `python serve.py --no-sync` instead.
+- Changes made while `start.bat` is closed are picked up next time you open it.
 - The first push may open a GitHub sign-in window. Sign in once and it's remembered.
 - If the window says it couldn't pull or push, open GitHub Desktop to see why.
-
-## Publish right now (manual)
-
-Double-click **`publish.bat`**. It processes any new photos and pushes to
-GitHub immediately, with no 60-second wait. It works whether or not `start.bat`
-is open. GitHub Desktop (**Commit to main** → **Push origin**) works too.
+- GitHub Desktop (**Commit to main** → **Push origin**) also works any time.
 
 ## Don't see your changes on the live site?
 Browsers keep GitHub Pages files for up to 10 minutes. Press **Ctrl+F5**
