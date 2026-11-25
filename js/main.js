@@ -7,6 +7,7 @@
   const ICONS = {
     instagram: '<svg viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zM12 0C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.2 4.4 2.6 6.8 7 7 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.2-4.4-2.6-6.8-7-7C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 100 12.4 6.2 6.2 0 000-12.4zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-11.8a1.4 1.4 0 100 2.9 1.4 1.4 0 000-2.9z"/></svg>',
     youtube: '<svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 00.5 6.2 31 31 0 000 12a31 31 0 00.5 5.8 3 3 0 002.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 002.1-2.1A31 31 0 0024 12a31 31 0 00-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>',
+    github: '<svg viewBox="0 0 24 24"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.1.7.8.6A12 12 0 0012 .3z"/></svg>',
   };
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
@@ -22,6 +23,7 @@
   $("socials").innerHTML = [
     SITE.instagram && `<a href="${esc(SITE.instagram)}" target="_blank" rel="noopener" aria-label="Instagram">${ICONS.instagram}</a>`,
     SITE.youtubeChannel && `<a href="${esc(SITE.youtubeChannel)}" target="_blank" rel="noopener" aria-label="YouTube">${ICONS.youtube}</a>`,
+    SITE.github && `<a href="${esc(SITE.github)}" target="_blank" rel="noopener" aria-label="GitHub">${ICONS.github}</a>`,
   ].filter(Boolean).join("");
   $("copyright").innerHTML = `&copy; ${year} ${esc(SITE.name)}<br>All rights reserved`;
 
@@ -44,6 +46,38 @@
       io.unobserve(img);
     });
   }, { rootMargin: "400px 0px" });
+
+  /* ---------- GitHub projects ---------- */
+  const LANG_COLORS = {
+    JavaScript: "#f1e05a", TypeScript: "#3178c6", HTML: "#e34c26", CSS: "#563d7c",
+    Python: "#3572A5", Java: "#b07219", "C#": "#178600", "C++": "#f34b7d", C: "#555555",
+    Go: "#00ADD8", Rust: "#dea584", PHP: "#4F5D95", Ruby: "#701516", Swift: "#F05138",
+    Kotlin: "#A97BFF", Dart: "#00B4AB", Shell: "#89e051", Vue: "#41b883", Svelte: "#ff3e00",
+  };
+  const prettyName = (n) => n.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  function timeAgo(iso) {
+    const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
+    if (days < 1) return "today";
+    if (days < 2) return "yesterday";
+    if (days < 30) return `${days} days ago`;
+    const months = Math.floor(days / 30.4);
+    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year${years > 1 ? "s" : ""} ago`;
+  }
+  async function loadRepos(user) {
+    // Keep a copy for 10 minutes so browsing around doesn't use up GitHub's limit
+    const key = `repos:${user}`;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(key) || "null");
+      if (saved && Date.now() - saved.at < 600000) return saved.repos;
+    } catch (e) {}
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/repos?sort=pushed&per_page=100`);
+    if (!res.ok) throw new Error(res.status);
+    const repos = await res.json();
+    try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), repos })); } catch (e) {}
+    return repos;
+  }
 
   /* ---------- Masonry grid ---------- */
   // Each photo goes into whichever column is currently shortest, so every
@@ -165,6 +199,55 @@
       window.onresize = () => layouts.forEach((f) => f());
     },
 
+    async github(page) {
+      content.innerHTML = `<p class="section-label">Loading projects…</p>`;
+      const profile = SITE.github || `https://github.com/${page.user}`;
+      const visit = routeCount;
+      let repos;
+      try {
+        repos = await loadRepos(page.user);
+      } catch (e) {
+        if (visit !== routeCount) return; // visitor already went to another page
+        content.innerHTML = `<p class="repo-error">Couldn't load projects right now.
+          <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See them on GitHub &rarr;</a></p>`;
+        return;
+      }
+      if (visit !== routeCount) return; // visitor already went to another page
+
+      const hide = new Set((page.hide || []).map((s) => s.toLowerCase()));
+      repos = repos
+        .filter((r) => (page.showForks || !r.fork) && !r.archived && !hide.has(r.name.toLowerCase()))
+        .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+
+      const card = (r, featured) => {
+        const live = r.homepage || (r.has_pages ? `https://${page.user}.github.io/${r.name}/` : "");
+        const lang = r.language ? `<span class="lang"><i style="background:${LANG_COLORS[r.language] || "#8a8a8a"}"></i>${esc(r.language)}</span>` : "";
+        return `
+          <article class="repo${featured ? " repo-featured" : ""}">
+            <a class="repo-img" href="${esc(r.html_url)}" target="_blank" rel="noopener" tabindex="-1">
+              <img src="https://opengraph.githubassets.com/1/${esc(r.full_name)}" alt="" loading="lazy">
+            </a>
+            <div class="repo-body">
+              ${featured ? `<p class="section-label">Latest project</p>` : ""}
+              <h2><a href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(prettyName(r.name))}</a></h2>
+              <p class="repo-desc">${r.description ? esc(r.description) : "<span>No description yet.</span>"}</p>
+              <p class="repo-meta">${lang}<span>Updated ${timeAgo(r.pushed_at)}</span>${r.stargazers_count ? `<span>&#9733; ${r.stargazers_count}</span>` : ""}</p>
+              <p class="repo-links">
+                <a href="${esc(r.html_url)}" target="_blank" rel="noopener">View code &rarr;</a>
+                ${live ? `<a href="${esc(live)}" target="_blank" rel="noopener">Open live &rarr;</a>` : ""}
+              </p>
+            </div>
+          </article>`;
+      };
+
+      content.innerHTML = repos.length ? `
+        ${card(repos[0], true)}
+        ${repos.length > 1 ? `<p class="section-label">More projects</p>
+          <div class="repo-grid">${repos.slice(1).map((r) => card(r)).join("")}</div>` : ""}
+        <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See everything on GitHub &rarr;</a>`
+        : `<p class="repo-error">No public projects yet. <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">GitHub profile &rarr;</a></p>`;
+    },
+
     videos(page) {
       const data = typeof VIDEOS !== "undefined" ? VIDEOS : { latest: null, popular: page.videos || [] };
       const views = (n) => (n ? `${Number(n).toLocaleString()} view${n == 1 ? "" : "s"}` : "");
@@ -202,6 +285,7 @@
               ${SITE.email ? `<a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a>` : ""}
               ${SITE.instagram ? `<a href="${esc(SITE.instagram)}" target="_blank" rel="noopener">Instagram</a>` : ""}
               ${SITE.youtubeChannel ? `<a href="${esc(SITE.youtubeChannel)}" target="_blank" rel="noopener">YouTube</a>` : ""}
+              ${SITE.github ? `<a href="${esc(SITE.github)}" target="_blank" rel="noopener">GitHub</a>` : ""}
             </div>
             ${SITE.email || SITE.web3formsKey ? `
             <form class="message-form" id="messageForm" novalidate>
@@ -269,7 +353,9 @@
   }
 
   /* ---------- Router ---------- */
+  let routeCount = 0;
   function route() {
+    routeCount++;
     const id = location.hash.replace(/^#\/?/, "");
     const page = SITE.pages.find((p) => p.id === id) || SITE.pages[0];
     document.title = `${page.title} — ${SITE.name}`;

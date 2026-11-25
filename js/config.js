@@ -32,6 +32,7 @@ const SITE = {
   tagline: "Photography", // small line under your name
   instagram: "https://instagram.com/apoishh",
   youtubeChannel: "https://www.youtube.com/@apoishhh",
+  github: "https://github.com/apoishh",
   email: "redrazzor728@gmail.com",
 
   // Message form on the About page. Get a free key at https://web3forms.com
@@ -53,6 +54,17 @@ const SITE = {
       type: "gallery",
       folder: "travel",
       photos: demo("travel", 12), // shown until photos/travel has photos
+    },
+    {
+      id: "projects",
+      title: "Projects",
+      type: "github",
+      // Loaded live from GitHub: newest-updated project first.
+      // Tip: add a description (and a website link) to a repo on GitHub
+      // and it shows up here automatically.
+      user: "apoishh",
+      hide: ["apoishh.github.io"], // repos to leave out (this website itself)
+      showForks: false,
     },
     {
       id: "youtube",

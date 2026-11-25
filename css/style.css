@@ -188,6 +188,58 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   padding-bottom: 2px;
 }
 
+/* ---------- Projects (GitHub) ---------- */
+.repo { display: grid; gap: 18px; align-content: start; }
+.repo-img {
+  display: block;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+  background: var(--placeholder);
+  border: 1px solid #1f1f1f;
+}
+.repo-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: brightness(.82);
+  transition: transform .4s ease, filter .3s;
+}
+.repo-img:hover img { transform: scale(1.02); filter: none; }
+.repo h2 { font-size: 18px; font-weight: 500; }
+.repo h2 a:hover { color: var(--muted); }
+.repo-desc { margin-top: 6px; font-size: 13px; line-height: 1.6; color: #c9c9c9; max-width: 60ch; }
+.repo-desc span { color: var(--muted); font-style: italic; }
+.repo-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 11px; color: var(--muted); }
+.lang { display: inline-flex; align-items: center; gap: 6px; }
+.lang i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.repo-links { margin-top: 14px; display: flex; gap: 20px; }
+.repo-links a {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s;
+}
+.repo-links a:hover { border-color: currentColor; }
+
+.repo-featured {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 72px;
+}
+.repo-featured h2 { font-size: 34px; letter-spacing: -.01em; line-height: 1.1; }
+.repo-featured .repo-desc { font-size: 15px; }
+.repo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 48px var(--gap);
+  margin-bottom: 56px;
+}
+.repo-error { font-size: 14px; color: var(--muted); display: grid; gap: 16px; justify-items: start; }
+@media (max-width: 1000px) {
+  .repo-featured { grid-template-columns: 1fr; gap: 20px; margin-bottom: 56px; }
+  .repo-featured h2 { font-size: 26px; }
+}
+
 /* ---------- About ---------- */
 .about {
   display: grid;
