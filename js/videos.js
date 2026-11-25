@@ -3,7 +3,7 @@ const VIDEOS = {
   "latest": {
     "id": "Rz5vf9F4cNg",
     "title": "2 Hours of Jamming, 0 Songs Played Correctly",
-    "views": 17
+    "views": 21
   },
   "popular": [
     {
@@ -14,7 +14,7 @@ const VIDEOS = {
     {
       "id": "Ex6nVFE8A0s",
       "title": "I Don't Love You, Teruna dan Dara & More | Beginner Band Jam",
-      "views": 159
+      "views": 161
     },
     {
       "id": "FJvKL97aU6I",
@@ -24,7 +24,7 @@ const VIDEOS = {
     {
       "id": "DbUN46bv2qY",
       "title": "eh Turkey Trip 2026",
-      "views": 81
+      "views": 82
     }
   ]
 };
