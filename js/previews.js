@@ -7,6 +7,13 @@ const PREVIEWS = {
     "url": "https://apoishh.github.io/Apoishh-Portfolio/",
     "taken": 1795593399
   },
+  "hospital-schedule-planner": {
+    "src": "previews/hospital-schedule-planner.jpg",
+    "w": 1200,
+    "h": 750,
+    "url": "https://apoishh.github.io/hospital-schedule-planner/",
+    "taken": 1795625820
+  },
   "monkey-money": {
     "src": "previews/monkey-money.jpg",
     "w": 1200,

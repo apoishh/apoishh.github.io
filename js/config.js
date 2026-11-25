@@ -33,6 +33,7 @@ const SITE = {
   instagram: "https://instagram.com/apoishh",
   youtubeChannel: "https://www.youtube.com/@apoishhh",
   github: "https://github.com/apoishh",
+  linkedin: "https://www.linkedin.com/in/arman-alfidz-azhar-b319a622b/",
   email: "redrazzor728@gmail.com",
 
   // Message form on the About page. Get a free key at https://web3forms.com
@@ -73,6 +74,7 @@ const SITE = {
       // Short descriptions shown on the cards (by repo name). Repos not listed
       // here use the description from GitHub (repo page -> About -> gear icon).
       descriptions: {
+        "hospital-schedule-planner": "Builds the weekly Surgical House Officer timetable for about 55 doctors in minutes instead of 2–3 hours. A Python solver (OR-Tools) follows every department rule (nights, off days, leave, fair weekends), adds the week to the existing Excel timetable, and publishes a read-only web page so every HO can check their shifts on their phone.",
         "monkey-money": "A personal-finance kit for Malaysia built on Excel and Python. Drop in Maybank / CIMB statement PDFs to import spending automatically, check the tracker against real bank balances, and explore spending, investments and future plans in a local dashboard. Everything runs on your own PC.",
         "snake-rush": "An arcade take on classic Snake: eat, grow and don't crash. Grab power-ups like 2× points, slow-mo, ghost mode and a food magnet, then chase a spot on the online leaderboard.",
         "Apoishh-Portfolio": "My first portfolio website, built from scratch to show my skills, projects and experience as a developer.",
@@ -86,7 +88,7 @@ const SITE = {
       title: "YouTube",
       type: "videos",
       // Filled in automatically from youtubeChannel (latest + 4 most viewed)
-      // by update_videos.py, which serve.py runs for you.
+      // by update_videos.py, which the daily GitHub job runs for you.
     },
     {
       id: "about",
