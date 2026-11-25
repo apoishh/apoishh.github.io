@@ -65,6 +65,15 @@ const SITE = {
       user: "apoishh",
       hide: ["apoishh.github.io"], // repos to leave out (this website itself)
       showForks: false,
+      // Short descriptions shown on the cards (by repo name). Repos not listed
+      // here use the description from GitHub (repo page -> About -> gear icon).
+      descriptions: {
+        "snake-rush": "An arcade take on classic Snake: eat, grow and don't crash. Grab power-ups like 2× points, slow-mo, ghost mode and a food magnet, then chase a spot on the online leaderboard.",
+        "Apoishh-Portfolio": "My first portfolio website, built from scratch to show my skills, projects and experience as a developer.",
+        "The-Simon-Game": "A web version of the classic Simon memory game. Watch the colour sequence, repeat it, and see how long you can keep up as it grows.",
+        "learning-html-resume": "A resume page built with plain HTML while learning the basics of page structure.",
+        "Learning-understanding-github-experimental": "A sandbox repo for learning how Git and GitHub work: commits, branches and history.",
+      },
     },
     {
       id: "youtube",

@@ -53,6 +53,7 @@
     Python: "#3572A5", Java: "#b07219", "C#": "#178600", "C++": "#f34b7d", C: "#555555",
     Go: "#00ADD8", Rust: "#dea584", PHP: "#4F5D95", Ruby: "#701516", Swift: "#F05138",
     Kotlin: "#A97BFF", Dart: "#00B4AB", Shell: "#89e051", Vue: "#41b883", Svelte: "#ff3e00",
+    SQL: "#e38c00", SCSS: "#c6538c", Lua: "#000080",
   };
   const prettyName = (n) => n.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   function timeAgo(iso) {
@@ -65,18 +66,88 @@
     const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
   }
-  async function loadRepos(user) {
-    // Keep a copy for 10 minutes so browsing around doesn't use up GitHub's limit
-    const key = `repos:${user}`;
+  // Keep a copy for 10 minutes so browsing around doesn't use up GitHub's
+  // limit of 60 requests an hour per visitor.
+  async function cached(key, load) {
     try {
       const saved = JSON.parse(sessionStorage.getItem(key) || "null");
-      if (saved && Date.now() - saved.at < 600000) return saved.repos;
+      if (saved && Date.now() - saved.at < 600000) return saved.data;
     } catch (e) {}
-    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(user)}/repos?sort=pushed&per_page=100`);
+    const data = await load();
+    try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch (e) {}
+    return data;
+  }
+  const getJSON = async (url) => {
+    const res = await fetch(url);
     if (!res.ok) throw new Error(res.status);
-    const repos = await res.json();
-    try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), repos })); } catch (e) {}
-    return repos;
+    return res.json();
+  };
+
+  // Public repos (newest-updated first) with every language each one uses
+  function loadRepos(page) {
+    const hide = new Set((page.hide || []).map((s) => s.toLowerCase()));
+    return cached(`repos2:${page.user}`, async () => {
+      const all = await getJSON(`https://api.github.com/users/${encodeURIComponent(page.user)}/repos?sort=pushed&per_page=100`);
+      const repos = all
+        .filter((r) => (page.showForks || !r.fork) && !r.archived && !hide.has(r.name.toLowerCase()))
+        .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
+        .map((r) => ({
+          name: r.name, url: r.html_url, description: r.description, pushed: r.pushed_at,
+          stars: r.stargazers_count, live: r.homepage || (r.has_pages ? `https://${page.user}.github.io/${r.name}/` : ""),
+          languages: r.language ? { [r.language]: 1 } : {},
+        }));
+      await Promise.all(repos.map(async (r) => {
+        try { r.languages = await getJSON(`https://api.github.com/repos/${encodeURIComponent(page.user)}/${encodeURIComponent(r.name)}/languages`); } catch (e) {}
+      }));
+      return repos;
+    });
+  }
+
+  // Contribution calendar (last 12 months). GitHub only offers this to signed-in
+  // apps, so it comes from a free public mirror of the profile graph.
+  const loadContributions = (user) => cached(`contrib:${user}`, () =>
+    getJSON(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(user)}?y=last`));
+
+  function languageBlock(langs) {
+    const total = Object.values(langs).reduce((a, b) => a + b, 0);
+    if (!total) return "";
+    const friendly = { PLpgSQL: "SQL", TSQL: "SQL", "Jupyter Notebook": "Jupyter" };
+    const items = Object.entries(langs).map(([name, bytes]) => ({
+      name: friendly[name] || name, pct: (bytes / total) * 100,
+      color: LANG_COLORS[name] || LANG_COLORS[friendly[name]] || "#8a8a8a",
+    }));
+    const fmt = (p) => (p < 0.1 ? "<0.1" : p < 10 ? p.toFixed(1) : Math.round(p));
+    return `
+      <div class="langbar">${items.map((l) => `<i style="width:${l.pct}%;background:${l.color}" title="${esc(l.name)}"></i>`).join("")}</div>
+      <ul class="langs">${items.map((l) => `<li><i style="background:${l.color}"></i>${esc(l.name)} <span>${fmt(l.pct)}%</span></li>`).join("")}</ul>`;
+  }
+
+  function contributionGraph(data) {
+    const days = data.contributions || [];
+    if (!days.length) return "";
+    // pad the first week so columns start on Sunday, like GitHub
+    const lead = new Date(days[0].date + "T00:00:00").getDay();
+    const cells = Array(lead).fill('<i class="pad"></i>').concat(days.map((d) => {
+      const when = new Date(d.date + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+      const label = `${d.count || "No"} contribution${d.count === 1 ? "" : "s"} on ${when}`;
+      return `<i class="l${d.level}" title="${label}"></i>`;
+    }));
+    const months = [];
+    days.forEach((d, i) => {
+      const dt = new Date(d.date + "T00:00:00");
+      if (dt.getDate() === 1) months.push({ col: Math.floor((i + lead) / 7), name: dt.toLocaleDateString(undefined, { month: "short" }) });
+    });
+    const total = Object.values(data.total || {}).reduce((a, b) => a + b, 0);
+    return `
+      <section class="activity">
+        <p class="section-label">Coding activity</p>
+        <p class="activity-total"><strong>${total}</strong> contributions in the last year</p>
+        <div class="heatmap-scroll"><div class="heatmap">
+          <div class="heatmap-months">${months.map((m) => `<span style="grid-column:${m.col + 1}">${m.name}</span>`).join("")}</div>
+          <div class="heatmap-grid">${cells.join("")}</div>
+        </div></div>
+        <p class="heatmap-legend">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</p>
+      </section>`;
   }
 
   /* ---------- Masonry grid ---------- */
@@ -203,49 +274,49 @@
       content.innerHTML = `<p class="section-label">Loading projects…</p>`;
       const profile = SITE.github || `https://github.com/${page.user}`;
       const visit = routeCount;
-      let repos;
-      try {
-        repos = await loadRepos(page.user);
-      } catch (e) {
-        if (visit !== routeCount) return; // visitor already went to another page
+      const [repoResult, contribResult] = await Promise.allSettled([
+        loadRepos(page), loadContributions(page.user),
+      ]);
+      if (visit !== routeCount) return; // visitor already went to another page
+      if (repoResult.status !== "fulfilled") {
         content.innerHTML = `<p class="repo-error">Couldn't load projects right now.
           <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See them on GitHub &rarr;</a></p>`;
         return;
       }
-      if (visit !== routeCount) return; // visitor already went to another page
+      const repos = repoResult.value;
+      const activity = contribResult.status === "fulfilled" ? contributionGraph(contribResult.value) : "";
 
-      const hide = new Set((page.hide || []).map((s) => s.toLowerCase()));
-      repos = repos
-        .filter((r) => (page.showForks || !r.fork) && !r.archived && !hide.has(r.name.toLowerCase()))
-        .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
-
-      const card = (r, featured) => {
-        const live = r.homepage || (r.has_pages ? `https://${page.user}.github.io/${r.name}/` : "");
-        const lang = r.language ? `<span class="lang"><i style="background:${LANG_COLORS[r.language] || "#8a8a8a"}"></i>${esc(r.language)}</span>` : "";
+      const ownDesc = page.descriptions || {};
+      const card = (r, i, featured) => {
+        const desc = ownDesc[r.name] || r.description;
         return `
           <article class="repo${featured ? " repo-featured" : ""}">
-            <a class="repo-img" href="${esc(r.html_url)}" target="_blank" rel="noopener" tabindex="-1">
-              <img src="https://opengraph.githubassets.com/1/${esc(r.full_name)}" alt="" loading="lazy">
-            </a>
-            <div class="repo-body">
-              ${featured ? `<p class="section-label">Latest project</p>` : ""}
-              <h2><a href="${esc(r.html_url)}" target="_blank" rel="noopener">${esc(prettyName(r.name))}</a></h2>
-              <p class="repo-desc">${r.description ? esc(r.description) : "<span>No description yet.</span>"}</p>
-              <p class="repo-meta">${lang}<span>Updated ${timeAgo(r.pushed_at)}</span>${r.stargazers_count ? `<span>&#9733; ${r.stargazers_count}</span>` : ""}</p>
-              <p class="repo-links">
-                <a href="${esc(r.html_url)}" target="_blank" rel="noopener">View code &rarr;</a>
-                ${live ? `<a href="${esc(live)}" target="_blank" rel="noopener">Open live &rarr;</a>` : ""}
-              </p>
+            <div class="repo-head">
+              <span class="repo-no">${featured ? "Latest project" : String(i + 1).padStart(2, "0")}</span>
+              <span class="repo-when">Updated ${timeAgo(r.pushed)}${r.stars ? ` &middot; &#9733; ${r.stars}` : ""}</span>
             </div>
+            <h2><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(prettyName(r.name))}</a></h2>
+            <p class="repo-desc">${desc ? esc(desc) : "<span>No description yet.</span>"}</p>
+            ${languageBlock(r.languages)}
+            <p class="repo-links">
+              ${r.live ? `<a class="primary" href="${esc(r.live)}" target="_blank" rel="noopener">Open live &rarr;</a>` : ""}
+              <a href="${esc(r.url)}" target="_blank" rel="noopener">View code &rarr;</a>
+            </p>
           </article>`;
       };
 
       content.innerHTML = repos.length ? `
-        ${card(repos[0], true)}
+        <div class="projects-top">
+          ${card(repos[0], 0, true)}
+          ${activity}
+        </div>
         ${repos.length > 1 ? `<p class="section-label">More projects</p>
-          <div class="repo-grid">${repos.slice(1).map((r) => card(r)).join("")}</div>` : ""}
+          <div class="repo-grid">${repos.slice(1).map((r, i) => card(r, i + 1)).join("")}</div>` : ""}
         <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See everything on GitHub &rarr;</a>`
-        : `<p class="repo-error">No public projects yet. <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">GitHub profile &rarr;</a></p>`;
+        : `${activity}<p class="repo-error">No public projects yet. <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">GitHub profile &rarr;</a></p>`;
+      // show the most recent weeks first on narrow screens
+      const scroller = content.querySelector(".heatmap-scroll");
+      if (scroller) scroller.scrollLeft = scroller.scrollWidth;
     },
 
     videos(page) {

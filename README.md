@@ -39,8 +39,12 @@ Shows your latest upload + your 4 most-viewed videos from `youtubeChannel` in
 ## Projects page
 Loads your public GitHub repos live (newest-updated first, the newest one
 featured). Forks and repos listed in `hide` (in `config.js`) are left out.
-Add a **description** and **website** to a repo on GitHub and they show up
-here. Repos with GitHub Pages get an "Open live" link automatically.
+Each card shows every language the repo uses (with percentages).
+Descriptions come from `descriptions` in `config.js`, or from the repo's
+description on GitHub if it isn't listed there. Repos with GitHub Pages get an
+"Open live" button automatically. The "Coding activity" graph is your GitHub
+contribution calendar for the last 12 months (via a free public mirror,
+github-contributions-api.jogruber.de, since GitHub only offers it to signed-in apps).
 
 ## Add a page
 Copy a block in `pages` and give it a new `id` and `title`. Types: `gallery`, `videos`, `about`.
