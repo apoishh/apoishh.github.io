@@ -4,7 +4,7 @@ Refreshes the YouTube page: your latest upload + your 4 most-viewed videos.
     python update_videos.py
 
 Reads the channel set as youtubeChannel in js/config.js and writes js/videos.js.
-serve.py runs this automatically on start and every few hours.
+The daily GitHub job runs this for you.
 Needs:  pip install yt-dlp
 """
 from pathlib import Path
@@ -48,15 +48,6 @@ def update():
     )
     print(time.strftime("[%H:%M:%S]"), f"videos updated: latest '{latest['title']}', "
           f"top {len(popular)} by views")
-
-
-def loop(hours=6):
-    while True:
-        try:
-            update()
-        except Exception as e:  # offline etc. - keep the last good list
-            print("video update failed:", e)
-        time.sleep(hours * 3600)
 
 
 if __name__ == "__main__":

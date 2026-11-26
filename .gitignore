@@ -3,6 +3,7 @@
 photos/**
 !photos/**/
 !photos/**/web/**
+!photos/**/thumb/**
 
 # Local-only stuff
 __pycache__/

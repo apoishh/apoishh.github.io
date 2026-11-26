@@ -36,11 +36,13 @@ from PIL import Image, ImageOps
 ROOT = Path(__file__).parent
 PHOTOS = ROOT / "photos"
 OUT_JS = ROOT / "js" / "photos.js"
-LONG_EDGE = 2000
+LONG_EDGE = 2000   # web/: full-screen view
+THUMB_EDGE = 800   # thumb/: grid tiles, about 6x smaller to download on phones
 QUALITY = 82
 NEWEST_FIRST = True
 BY_DATE_TAKEN = {"travel"}  # pages ordered by the date photos were taken
 EXTS = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
+IGNORE = {".ini", ".db", ".tmp", ".xmp"}  # not photos, nothing to warn about
 RAW_EXTS = {".arw", ".cr2", ".cr3", ".nef", ".raf", ".rw2", ".orf", ".dng", ".pef", ".srw"}
 
 
@@ -124,19 +126,24 @@ def open_image(src):
 def photo_folders():
     """photos/<page> and any place subfolders, e.g. photos/travel/bromo."""
     return sorted(p for p in PHOTOS.rglob("*")
-                  if p.is_dir() and "web" not in p.relative_to(PHOTOS).parts)
+                  if p.is_dir() and not {"web", "thumb"} & set(p.relative_to(PHOTOS).parts))
 
 
 def build():
     result, newest = {}, {}
     for folder in photo_folders():
         originals = originals_in(folder)
-        web_dir = folder / "web"
+        web_dir, thumb_dir = folder / "web", folder / "thumb"
         items = []
+        for f in folder.iterdir():  # e.g. iPhone .HEIC: tell the user instead of ignoring it
+            if f.is_file() and not f.name.startswith(".") and f.suffix.lower() not in EXTS | RAW_EXTS | IGNORE:
+                print(f"  skipped {f.relative_to(PHOTOS)}: unsupported type (export it as JPG)")
         if originals:
             web_dir.mkdir(exist_ok=True)
+            thumb_dir.mkdir(exist_ok=True)
         for src in originals:
             dst = web_dir / (src.stem + ".jpg")
+            thumb = thumb_dir / dst.name
             try:
                 if not dst.exists() or dst.stat().st_mtime < src.stat().st_mtime:
                     im = open_image(src).convert("RGB")
@@ -145,15 +152,20 @@ def build():
                     print("  made", dst.relative_to(ROOT))
                 with Image.open(dst) as im:
                     w, h = im.size
+                    if not thumb.exists() or thumb.stat().st_mtime < dst.stat().st_mtime:
+                        small = im.copy()
+                        small.thumbnail((THUMB_EDGE, THUMB_EDGE), Image.LANCZOS)
+                        small.save(thumb, "JPEG", quality=QUALITY, optimize=True, progressive=True)
             except Exception as e:  # half-copied or broken file: skip, retry next time
                 print(f"  skipped {src.name}: {e}")
                 continue
-            items.append({"src": dst.relative_to(ROOT).as_posix(), "w": w, "h": h})
+            items.append({"src": dst.relative_to(ROOT).as_posix(),
+                          "thumb": thumb.relative_to(ROOT).as_posix(), "w": w, "h": h})
 
-        # remove web copies whose original was deleted
-        if web_dir.exists():
-            keep = {src.stem.lower() for src in originals}
-            for old in web_dir.glob("*.jpg"):
+        # remove web/thumb copies whose original was deleted
+        keep = {src.stem.lower() for src in originals}
+        for d in (web_dir, thumb_dir):
+            for old in d.glob("*.jpg") if d.exists() else []:
                 if old.stem.lower() not in keep:
                     old.unlink()
                     print("  removed", old.relative_to(ROOT))

@@ -50,10 +50,15 @@ def changes():
     return tuple(snap)
 
 
+def is_generated(line):
+    """Files the scripts make for you: each photo's web/thumb copy and photos.js."""
+    return "/thumb/" in line or line.endswith("js/photos.js")
+
+
 def summary(snap):
     photos = sum(1 for line, _ in snap if "/web/" in line and line[:2].strip() in ("??", "A"))
     removed = sum(1 for line, _ in snap if "/web/" in line and "D" in line[:2])
-    other = sum(1 for line, _ in snap if "/web/" not in line and "photos.js" not in line)
+    other = sum(1 for line, _ in snap if "/web/" not in line and not is_generated(line))
     parts = []
     if photos:
         parts.append(f"add {photos} photo{'s' * (photos != 1)}")
@@ -95,19 +100,28 @@ def unpushed():
     return code == 0 and out.isdigit() and int(out) > 0
 
 
+def push_pending():
+    """Upload commits that are saved locally but not on GitHub yet."""
+    code, out = git("push", "origin", "HEAD:main")
+    log("Published to GitHub." if code == 0 else "Push failed: " + out)
+
+
 def describe(snap):
-    """Readable list of what changed, for the confirm question."""
-    names = []
+    """Readable list of what changed, for the confirm question.
+    Every non-photo file is always listed, so nothing private can hide in
+    "... and N more"; only long photo lists are shortened."""
+    photos, files = [], []
     for line, _ in snap:
-        path = line[3:].strip('"').split(" -> ")[-1]
-        if path == "js/photos.js":
+        if is_generated(line):
             continue
+        path = line[3:].strip('"').split(" -> ")[-1]
         sign = "-" if "D" in line[:2] else "+" if line[:2].strip() in ("??", "A") else "~"
         if "/web/" in path:  # show the photo as "travel/Bromo/DSC0001.jpg"
-            path = path.replace("photos/", "", 1).replace("/web/", "/")
-        names.append(f"   {sign} {path}")
-    more = len(names) - 8
-    return "\n".join(names[:8] + ([f"   ... and {more} more"] if more > 0 else []))
+            photos.append(f"   {sign} {path.replace('photos/', '', 1).replace('/web/', '/')}")
+        else:
+            files.append(f"   {sign} {path}")
+    more = len(photos) - 8
+    return "\n".join(files + photos[:8] + ([f"   ... and {more} more photos"] if more > 0 else []))
 
 
 def _read_keys(q):
@@ -141,11 +155,7 @@ def run():
             while not keys.empty():
                 key = keys.get()
                 if key in ("p", "y", "yes", "publish") and (snap or unpushed()):
-                    if snap:
-                        publish(snap)
-                    else:
-                        code, out = git("push", "origin", "HEAD:main")
-                        log("Published to GitHub." if code == 0 else "Push failed: " + out)
+                    publish(snap) if snap else push_pending()
                     last_snap, asked, declined, last_pull = changes(), None, None, time.time()
                     snap = last_snap
                 elif key in ("p", "y", "yes", "publish"):
@@ -178,8 +188,7 @@ def publish_now():
     if snap:
         publish(snap)
     elif unpushed():
-        code, out = git("push", "origin", "HEAD:main")
-        log("Published to GitHub." if code == 0 else "Push failed: " + out)
+        push_pending()
     else:
         log("Nothing new to publish - the site is up to date.")
 

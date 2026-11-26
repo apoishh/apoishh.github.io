@@ -3,29 +3,18 @@
    ==========================================================================
 
    ADDING PHOTOS
-   1. Put your full-size photos in the matching folder, e.g. photos/travel/
-   2. Run:  python update_photos.py
-      It makes fast web-sized copies and records each photo's shape.
-   3. Point the gallery at that folder with  folder: "travel"
-   Photos show in file-name order and keep their original ratio.
+   Open start.bat and drop full-size photos into a folder, e.g. photos/travel/Bali/.
+   They're converted for the web automatically and keep their original ratio.
+   A gallery shows the folder named in  folder: "travel"
    Optional captions:  captions: { "DSC09340": "Class of 2026" }
 
    ADDING A NEW PAGE
    Copy one of the blocks in "pages" and change the id / title.
    type: "gallery" -> photo grid
-   type: "videos"  -> YouTube embeds
-   type: "about"   -> text + portrait + contact links
+   type: "github"  -> your GitHub projects
+   type: "videos"  -> YouTube videos
+   type: "about"   -> photo + text + contact links
    ========================================================================== */
-
-// Temporary placeholder images so you can see the layout. Delete this helper
-// (and the demo(...) calls below) once you add your own photos.
-function demo(seed, count) {
-  const sizes = [[1200, 1500], [1200, 1500], [1500, 1000], [1200, 1500]];
-  return Array.from({ length: count }, (_, i) => {
-    const [w, h] = sizes[i % sizes.length];
-    return { src: `https://picsum.photos/seed/${seed}${i}/${w}/${h}`, w, h };
-  });
-}
 
 const SITE = {
   name: "APOISHH",
@@ -54,7 +43,6 @@ const SITE = {
       title: "Travel",
       type: "gallery",
       folder: "travel",
-      photos: demo("travel", 12), // shown until photos/travel has photos
     },
     {
       id: "projects",

@@ -13,7 +13,6 @@
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const norm = (p) => (typeof p === "string" ? { src: p, caption: "" } : p);
 
   /* ---------- Sidebar ---------- */
   $("brand").innerHTML = `<span>${esc(SITE.name)}</span><span>${esc(SITE.tagline)}</span>`;
@@ -68,8 +67,7 @@
     const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
   }
-  // Keep a copy for 10 minutes so browsing around doesn't use up GitHub's
-  // limit of 60 requests an hour per visitor.
+  // Keep a copy for 10 minutes so clicking between pages doesn't refetch
   async function cached(key, load) {
     try {
       const saved = JSON.parse(sessionStorage.getItem(key) || "null");
@@ -84,26 +82,6 @@
     if (!res.ok) throw new Error(res.status);
     return res.json();
   };
-
-  // Public repos (newest-updated first) with every language each one uses
-  function loadRepos(page) {
-    const hide = new Set((page.hide || []).map((s) => s.toLowerCase()));
-    return cached(`repos2:${page.user}`, async () => {
-      const all = await getJSON(`https://api.github.com/users/${encodeURIComponent(page.user)}/repos?sort=pushed&per_page=100`);
-      const repos = all
-        .filter((r) => (page.showForks || !r.fork) && !r.archived && !hide.has(r.name.toLowerCase()))
-        .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
-        .map((r) => ({
-          name: r.name, url: r.html_url, description: r.description, pushed: r.pushed_at,
-          stars: r.stargazers_count, live: r.homepage || (r.has_pages ? `https://${page.user}.github.io/${r.name}/` : ""),
-          languages: r.language ? { [r.language]: 1 } : {},
-        }));
-      await Promise.all(repos.map(async (r) => {
-        try { r.languages = await getJSON(`https://api.github.com/repos/${encodeURIComponent(page.user)}/${encodeURIComponent(r.name)}/languages`); } catch (e) {}
-      }));
-      return repos;
-    });
-  }
 
   // Contribution calendar (last 12 months). GitHub only offers this to signed-in
   // apps, so it comes from a free public mirror of the profile graph.
@@ -124,32 +102,51 @@
       <ul class="langs">${items.map((l) => `<li><i style="background:${l.color}"></i>${esc(l.name)} <span>${fmt(l.pct)}%</span></li>`).join("")}</ul>`;
   }
 
+  // Returns the section's HTML plus fit(), which draws only as many recent
+  // weeks as fit the box, so there's never a sideways scroll on phones.
   function contributionGraph(data) {
     const days = data.contributions || [];
-    if (!days.length) return "";
-    // pad the first week so columns start on Sunday, like GitHub
+    if (!days.length) return { html: "", fit() {} };
+    // Numbers only: this data comes from an outside service, so never put its raw text in the page
+    const num = (v) => Math.max(0, Number(v) || 0);
+    // one column per week, Sunday first like GitHub
+    const weeks = [];
     const lead = new Date(days[0].date + "T00:00:00").getDay();
-    const cells = Array(lead).fill('<i class="pad"></i>').concat(days.map((d) => {
+    [...Array(lead).fill(null), ...days].forEach((d, i) => (weeks[i / 7 | 0] ||= []).push(d));
+    const cell = (d) => {
+      if (!d) return '<i class="pad"></i>';
+      const count = num(d.count), level = Math.min(4, Math.floor(num(d.level)));
       const when = new Date(d.date + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-      const label = `${d.count || "No"} contribution${d.count === 1 ? "" : "s"} on ${when}`;
-      return `<i class="l${d.level}" title="${label}"></i>`;
-    }));
-    const months = [];
-    days.forEach((d, i) => {
-      const dt = new Date(d.date + "T00:00:00");
-      if (dt.getDate() === 1) months.push({ col: Math.floor((i + lead) / 7), name: dt.toLocaleDateString(undefined, { month: "short" }) });
-    });
-    const total = Object.values(data.total || {}).reduce((a, b) => a + b, 0);
-    return `
-      <section class="activity">
-        <p class="section-label">Coding activity</p>
-        <p class="activity-total"><strong>${total}</strong> contributions in the last year</p>
-        <div class="heatmap-scroll"><div class="heatmap" style="--weeks:${Math.ceil((lead + days.length) / 7)}">
-          <div class="heatmap-months">${months.map((m) => `<span style="grid-column:${m.col + 1}">${m.name}</span>`).join("")}</div>
-          <div class="heatmap-grid">${cells.join("")}</div>
-        </div></div>
-        <p class="heatmap-legend">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</p>
-      </section>`;
+      return `<i class="l${level}" title="${esc(`${count || "No"} contribution${count === 1 ? "" : "s"} on ${when}`)}"></i>`;
+    };
+    const total = Object.values(data.total || {}).reduce((a, b) => a + num(b), 0);
+    let shown = 0;
+    return {
+      html: `
+        <section class="activity">
+          <p class="section-label">Coding activity</p>
+          <p class="activity-total"><strong>${total}</strong> contributions in the last year<span class="activity-range"></span></p>
+          <div class="heatmap-box"></div>
+          <p class="heatmap-legend">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</p>
+        </section>`,
+      fit() {
+        const box = content.querySelector(".heatmap-box");
+        if (!box) return;
+        const n = Math.max(4, Math.min(weeks.length, Math.floor((box.clientWidth + 3) / 15))); // 12px cell + 3px gap
+        if (n === shown) return;
+        shown = n;
+        const part = weeks.slice(-n);
+        const months = part.map((w, col) => {
+          const first = w.find((d) => d && new Date(d.date + "T00:00:00").getDate() === 1);
+          return first ? `<span style="grid-column:${col + 1}">${esc(new Date(first.date + "T00:00:00").toLocaleDateString(undefined, { month: "short" }))}</span>` : "";
+        }).join("");
+        box.innerHTML = `<div class="heatmap" style="--weeks:${n}">
+          <div class="heatmap-months">${months}</div>
+          <div class="heatmap-grid">${part.flat().map(cell).join("")}</div></div>`;
+        content.querySelector(".activity-range").textContent =
+          n < weeks.length ? ` · showing the last ${n < 9 ? n + " weeks" : Math.round(n / 4.35) + " months"}` : "";
+      },
+    };
   }
 
   /* ---------- Masonry grid ---------- */
@@ -162,7 +159,8 @@
       a.href = p.src;
       a.dataset.index = i;
       a.style.aspectRatio = p.w && p.h ? `${p.w} / ${p.h}` : "4 / 5";
-      a.innerHTML = `<img data-src="${esc(p.src)}" alt="${esc(p.caption || altText)}">`;
+      // small copy in the grid, full size only in the lightbox
+      a.innerHTML = `<img data-src="${esc(p.thumb || p.src)}" alt="${esc(p.caption || altText)}">`;
       const img = a.firstChild;
       img.addEventListener("load", () => {
         if (!p.w) { p.w = img.naturalWidth; p.h = img.naturalHeight; a.style.aspectRatio = `${p.w} / ${p.h}`; }
@@ -208,7 +206,6 @@
     gallery(page) {
       const all = typeof PHOTOS !== "undefined" ? PHOTOS : {};
       const prep = (list) => list.map((p) => {
-        p = norm(p);
         const key = p.src.split("/").pop().replace(/\.[^.]+$/, "");
         return { ...p, caption: p.caption || (page.captions || {})[key] || "" };
       });
@@ -222,23 +219,25 @@
       const sections = Object.keys(all)
         .filter((k) => page.folder && k.startsWith(page.folder + "/"))
         .map((k) => ({ title: prettify(k.split("/").pop()), photos: prep(all[k]) }));
-      const loose = prep((all[page.folder] || []).length ? all[page.folder] : sections.length ? [] : page.photos || []);
+      const loose = prep(all[page.folder] || []);
       if (loose.length) sections.push({ title: sections.length ? "Other" : "", photos: loose });
 
-      // List the places under this page's link in the menu
-      const titled = sections.filter((s) => s.title);
-      const link = document.querySelector(`.nav a[data-id="${page.id}"]`);
-      if (titled.length && link) {
-        const sub = document.createElement("div");
-        sub.className = "subnav";
+      // Place links: under this page's link in the menu, and as a row on phones
+      const placeLinks = (el) => {
         sections.forEach((s, i) => {
           if (!s.title) return;
           const b = document.createElement("button");
           b.textContent = s.title;
           b.onclick = () => document.getElementById(`place-${i}`).scrollIntoView({ behavior: "smooth" });
-          sub.appendChild(b);
+          el.appendChild(b);
         });
-        link.after(sub);
+        return el;
+      };
+      const link = document.querySelector(`.nav a[data-id="${page.id}"]`);
+      if (sections.some((s) => s.title) && link) {
+        const sub = document.createElement("div");
+        sub.className = "subnav";
+        link.after(placeLinks(sub));
       }
 
       const layouts = [];
@@ -246,13 +245,7 @@
       if (sections.length > 1) {
         const nav = document.createElement("nav");
         nav.className = "place-nav";
-        sections.forEach((s, i) => {
-          const b = document.createElement("button");
-          b.textContent = s.title;
-          b.onclick = () => document.getElementById(`place-${i}`).scrollIntoView({ behavior: "smooth" });
-          nav.appendChild(b);
-        });
-        frag.appendChild(nav);
+        frag.appendChild(placeLinks(nav));
       }
       sections.forEach((s, i) => {
         const sec = document.createElement("section");
@@ -275,24 +268,19 @@
       content.innerHTML = `<p class="section-label">Loading projects…</p>`;
       const profile = SITE.github || `https://github.com/${page.user}`;
       const visit = routeCount;
-      const [repoResult, contribResult] = await Promise.allSettled([
-        loadRepos(page), loadContributions(page.user),
-      ]);
+      // Projects come from js/projects.js (built by update_projects.py); only the
+      // activity graph is fetched live.
+      const repos = typeof PROJECTS !== "undefined" ? PROJECTS : [];
+      let graph = { html: "", fit() {} };
+      try { graph = contributionGraph(await loadContributions(page.user)); } catch (e) {}
+      const activity = graph.html;
       if (visit !== routeCount) return; // visitor already went to another page
-      if (repoResult.status !== "fulfilled") {
-        content.innerHTML = `<p class="repo-error">Couldn't load projects right now.
-          <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See them on GitHub &rarr;</a></p>`;
-        return;
-      }
-      const repos = repoResult.value;
-      const activity = contribResult.status === "fulfilled" ? contributionGraph(contribResult.value) : "";
 
       const ownDesc = page.descriptions || {};
-      const previews = typeof PREVIEWS !== "undefined" ? PREVIEWS : {};
       const card = (r, i, featured) => {
         const desc = ownDesc[r.name] || r.description;
-        const live = (page.live || {})[r.name] || r.live;
-        const shot = previews[r.name];
+        const live = r.live;
+        const shot = r.preview;
         // Projects with a live site show a screenshot and get a bigger tile
         const preview = shot ? `
           <a class="repo-shot" href="${esc(live || r.url)}" target="_blank" rel="noopener" tabindex="-1">
@@ -326,13 +314,12 @@
           <div class="repo-grid">${repos.slice(1).map((r, i) => card(r, i + 1)).join("")}</div>` : ""}
         <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">See everything on GitHub &rarr;</a>`
         : `${activity}<p class="repo-error">No public projects yet. <a class="channel-link" href="${esc(profile)}" target="_blank" rel="noopener">GitHub profile &rarr;</a></p>`;
-      // show the most recent weeks first on narrow screens
-      const scroller = content.querySelector(".heatmap-scroll");
-      if (scroller) scroller.scrollLeft = scroller.scrollWidth;
+      graph.fit();
+      window.onresize = () => graph.fit();
     },
 
     videos(page) {
-      const data = typeof VIDEOS !== "undefined" ? VIDEOS : { latest: null, popular: page.videos || [] };
+      const data = typeof VIDEOS !== "undefined" ? VIDEOS : { latest: null, popular: [] };
       const views = (n) => (n ? `${Number(n).toLocaleString()} view${n == 1 ? "" : "s"}` : "");
       const card = (v) => `
         <div class="video">
@@ -358,7 +345,7 @@
 
     about(page) {
       const fromFolder = typeof PHOTOS !== "undefined" && PHOTOS[page.folder];
-      const portrait = (fromFolder && fromFolder[0] && fromFolder[0].src) || page.portrait;
+      const portrait = fromFolder && fromFolder[0] && fromFolder[0].src;
       content.innerHTML = `
         <div class="about">
           ${portrait ? `<img src="${esc(portrait)}" alt="${esc(SITE.name)}">` : "<div></div>"}

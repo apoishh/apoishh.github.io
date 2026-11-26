@@ -286,9 +286,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .activity .section-label { margin-bottom: 6px; }
 .activity-total { font-size: 13px; color: #bdbdbd; margin-bottom: 18px; }
 .activity-total strong { color: var(--fg); font-size: 18px; font-weight: 500; margin-right: 4px; }
-.heatmap-scroll { overflow-x: auto; padding-bottom: 6px; }
+.heatmap-box { overflow: hidden; } /* JS draws only the weeks that fit */
+.activity-range { color: var(--muted); }
 /* Stretches edge to edge: one column per week, square cells that grow with the width */
-.heatmap { display: grid; gap: 8px; width: 100%; min-width: calc(var(--weeks) * 12px); }
+.heatmap { display: grid; gap: 8px; width: 100%; }
 .heatmap-months, .heatmap-grid { display: grid; grid-template-columns: repeat(var(--weeks), minmax(0, 1fr)); column-gap: 3px; }
 .heatmap-months { font-size: 10px; color: var(--muted); }
 .heatmap-months span { grid-row: 1; white-space: nowrap; }
