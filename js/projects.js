@@ -4,11 +4,11 @@ const PROJECTS = [
     "name": "hospital-schedule-planner",
     "url": "https://github.com/apoishh/hospital-schedule-planner",
     "description": "Weekly Surgical HO timetable generator (Excel + OR-Tools) with a read-only viewer page",
-    "pushed": "2026-11-25T16:50:36Z",
+    "pushed": "2026-11-26T18:37:45Z",
     "stars": 0,
     "live": "https://apoishh.github.io/hospital-schedule-planner/",
     "languages": {
-      "Python": 126756,
+      "Python": 145997,
       "HTML": 17640,
       "PowerShell": 1458
     },
